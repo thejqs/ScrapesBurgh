@@ -14,7 +14,8 @@ class ScrapesBurgh():
             html = click.read()
             return html
         else:
-            raise Exception("Nice try. Bad link.")
+            # raise Exception("Nice try. Bad link.")
+            pass
 
     @staticmethod
     def parse_html(html):
@@ -31,7 +32,9 @@ class ScrapesBurgh():
         return tree
 
     @staticmethod
-    def next_url(tree):
+    def all_urls(url):
+        tree = ScrapesBurgh.treeify(url)
+
         board_ids = []
 
         for option in tree.xpath('//*[@id="form1"]/blockquote/select/option'):
@@ -42,17 +45,26 @@ class ScrapesBurgh():
                 pass
 
         board_ids = sorted(board_ids)
-        print board_ids
 
-        for board_id in board_ids:
-            url = "http://www.alleghenycounty.us/boards/index.asp?Board='%d'&button1=View" % board_id
-            ScrapesBurgh.get_board_info(url)
-
+        return tree, board_ids
 
     @staticmethod
-    def get_board_info(url):
+    def scrape_data(board_ids):
+        print board_ids
+        for board_id in board_ids:
+            url = "http://www.alleghenycounty.us/boards/index.asp?Board=%d&button1=View" % board_id
+            tree = ScrapesBurgh.treeify(url)
+            print url
+            ScrapesBurgh.get_board_info(url, tree)
 
-        tree = ScrapesBurgh.treeify(url)
+    @staticmethod
+    def start_scrape():
+        tree, board_ids = ScrapesBurgh.all_urls('http://www.alleghenycounty.us/boards/index.asp')
+
+        ScrapesBurgh.scrape_data(board_ids)
+
+    @staticmethod
+    def get_board_info(url, tree):
 
         # print html
         board_name_xpath ='//*[@id="form1"]/blockquote/table[1]/tr[1]/td/font/b/text()'
@@ -67,7 +79,6 @@ class ScrapesBurgh():
         link_xpath = '//*[@id="form1"]/blockquote/table[1]/tr[1]/td/font/b/a/@href'
         members_xpath = '//*[@id="form1"]/blockquote/table[2]/tr/td/font/text()'
 
-
         board_name = tree.xpath(board_name_xpath)
         history = tree.xpath(history_xpath)
         creation = tree.xpath(creation_xpath)
@@ -80,13 +91,13 @@ class ScrapesBurgh():
         link = tree.xpath(link_xpath)
         members = tree.xpath(members_xpath)
 
-        board_name = board_name[0].strip()
-        creation = creation[0].strip()
+        # board_name = board_name[0].strip()
+        # creation = creation[0].strip()
 
-        contact = contact[0].replace(u'\xa0', u' ')
-        meeting_place = meeting_place[0].replace(u'\xa0', u' ')
-        meeting_time = meeting_time[0].replace(u'\xa0', u' ')
-        phone = phone[0].replace(u'\xa0', u' ')
+        # contact = contact[0].replace(u'\xa0', u' ')
+        # meeting_place = meeting_place[0].replace(u'\xa0', u' ')
+        # meeting_time = meeting_time[0].replace(u'\xa0', u' ')
+        # phone = phone[0].replace(u'\xa0', u' ')
 
         address_list = []
         for addr in address:
@@ -108,4 +119,6 @@ class ScrapesBurgh():
 
             members_dict[name] = (board_name, date_final)
 
-        # print board_name, '\n', history, '\n', creation, '\n', members_dict, '\n', contact, '\n', link, '\n', address_list, '\n', meeting_place, '\n', meeting_time, '\n', phone, '\n', email
+        print board_name, '\n', history, '\n', creation, '\n', members_dict, '\n', contact, '\n', link, '\n', address_list, '\n', meeting_place, '\n', meeting_time, '\n', phone, '\n', email
+
+
