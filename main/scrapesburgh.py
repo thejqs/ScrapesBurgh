@@ -5,20 +5,7 @@ import StringIO
 import re
 
 
-# name xpath:
-# //*[@id="form1"]/blockquote/table[2]/tr[2]/td/font
-
-# board id no. xpath starts at
-# //*[@id="form1"]/blockquote/select/option[3]
-
-# ends at:
-# //*[@id="form1"]/blockquote/select/option[57]
-
-# url structure:
-# http://www.alleghenycounty.us/boards/index.asp?Board=231&button1=View
-
-
-class ScrapesBrugh():
+class ScrapesBurgh():
 
     @staticmethod
     def open_url(url):
@@ -32,14 +19,40 @@ class ScrapesBrugh():
     @staticmethod
     def parse_html(html):
         parser = etree.HTMLParser()
-        tree = etree.parse(StringIO.StringIO(html), parser)
+        master_tree = etree.parse(StringIO.StringIO(html), parser)
+
+        return master_tree
+
+    @staticmethod
+    def treeify(url):
+        html = ScrapesBurgh.open_url(url)
+        tree = ScrapesBurgh.parse_html(html)
 
         return tree
 
     @staticmethod
+    def next_url(tree):
+        board_ids = []
+
+        for option in tree.xpath('//*[@id="form1"]/blockquote/select/option'):
+            try:
+                board_id = int(option.values()[0])
+                board_ids.append(board_id)
+            except:
+                pass
+
+        board_ids = sorted(board_ids)
+        print board_ids
+
+        for board_id in board_ids:
+            url = "http://www.alleghenycounty.us/boards/index.asp?Board='%d'&button1=View" % board_id
+            ScrapesBurgh.get_board_info(url)
+
+
+    @staticmethod
     def get_board_info(url):
-        html = BurghScraper.open_url(url)
-        tree = BurghScraper.parse_html(html)
+
+        tree = ScrapesBurgh.treeify(url)
 
         # print html
         board_name_xpath ='//*[@id="form1"]/blockquote/table[1]/tr[1]/td/font/b/text()'
@@ -94,10 +107,5 @@ class ScrapesBrugh():
             date_final = date_match.group()
 
             members_dict[name] = (board_name, date_final)
-            
-        print board_name, '\n', history, '\n', creation, '\n', members_dict, '\n', contact, '\n', link, '\n', address_list, '\n', meeting_place, '\n', meeting_time, '\n', phone, '\n', email
 
-
-
-# for board_id in range(3,58):
-#     url = 'http://www.alleghenycounty.us/boards/index.asp?Board=%d&button1=View' % board_id
+        # print board_name, '\n', history, '\n', creation, '\n', members_dict, '\n', contact, '\n', link, '\n', address_list, '\n', meeting_place, '\n', meeting_time, '\n', phone, '\n', email
