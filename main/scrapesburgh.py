@@ -14,8 +14,8 @@ class ScrapesBurgh():
             html = click.read()
             return html
         else:
-            # raise Exception("Nice try. Bad link.")
-            pass
+            raise Exception("Nice try. Bad link.")
+            # pass
 
     @staticmethod
     def parse_html(html):
@@ -50,7 +50,7 @@ class ScrapesBurgh():
 
     @staticmethod
     def scrape_data(board_ids):
-        print board_ids
+        # print board_ids
         for board_id in board_ids:
             url = "http://www.alleghenycounty.us/boards/index.asp?Board=%d&button1=View" % board_id
             tree = ScrapesBurgh.treeify(url)
@@ -67,7 +67,7 @@ class ScrapesBurgh():
     def get_board_info(url, tree):
 
         # print html
-        board_name_xpath ='//*[@id="form1"]/blockquote/table[1]/tr[1]/td/font/b/text()'
+        board_name_xpath = '//*[@id="form1"]/blockquote/table[1]/tr[1]/td/font/b/text()'
         history_xpath = '//*[@id="form1"]/blockquote/table[1]/tr[7]/td/font/p/text()'
         contact_xpath = '//*[@id="form1"]/blockquote/table[1]/tr[2]/td[2]/font/text()'
         address_xpath = '//*[@id="form1"]/blockquote/table[1]/tr[4]/td[2]/font/text()'
@@ -79,7 +79,11 @@ class ScrapesBurgh():
         link_xpath = '//*[@id="form1"]/blockquote/table[1]/tr[1]/td/font/b/a/@href'
         members_xpath = '//*[@id="form1"]/blockquote/table[2]/tr/td/font/text()'
 
+        if tree.xpath(board_name_xpath) is not None:
+            board_name_xpath = '//*[@id="form1"]/blockquote/table[1]/tr[1]/td/font/b/text()'
+
         board_name = tree.xpath(board_name_xpath)
+
         history = tree.xpath(history_xpath)
         creation = tree.xpath(creation_xpath)
         contact = tree.xpath(contact_xpath)
@@ -91,34 +95,66 @@ class ScrapesBurgh():
         link = tree.xpath(link_xpath)
         members = tree.xpath(members_xpath)
 
-        # board_name = board_name[0].strip()
-        # creation = creation[0].strip()
+        board_name = board_name[0].strip()
 
-        # contact = contact[0].replace(u'\xa0', u' ')
-        # meeting_place = meeting_place[0].replace(u'\xa0', u' ')
-        # meeting_time = meeting_time[0].replace(u'\xa0', u' ')
-        # phone = phone[0].replace(u'\xa0', u' ')
+        try:
+            creation = creation[0].strip()
+        except:
+            pass
 
-        address_list = []
-        for addr in address:
-            addr = addr.strip()
-            address_list.append(addr)
+        if contact:
+            contact = contact[0].replace(u'\xa0', u' ')
+        else:
+            print "No contact name"
 
-        members_dict = {}
+        if meeting_place:
+            meeting_place = meeting_place[0].replace(u'\xa0', u' ')
+        else:
+            print "No meeting place"
 
-        for member in members:
-            member = member.strip()
-            name_pattern = '([A-Z]\w+)'
-            name_match = re.findall(name_pattern, '%s' % member)
-            name = name_match[1] + ' ' + name_match[0]
-            # print name
+        if meeting_time:
+            meeting_time = meeting_time[0].replace(u'\xa0', u' ')
+        else:
+            print "No meeting time"
 
-            date_pattern = '(\d+/\d+/\d+)'
-            date_match = re.search(date_pattern, '%s' % member)
-            date_final = date_match.group()
+        if phone:
+            phone = phone[0].replace(u'\xa0', u' ')
+        else:
+            print "No phone number"
 
-            members_dict[name] = (board_name, date_final)
+        if address:
+            address_list = []
+            for addr in address:
+                addr = addr.strip()
+                address_list.append(addr)
+        else:
+            print "No address"
+
+        if members:
+            members_dict = {}
+
+            for member in members:
+                member = member.strip()
+
+                name_pattern = '([A-Z]\w+)'
+                name_match = re.findall(name_pattern, '%s' % member)
+                if len(name_match) == 1:
+                    first_initial_pattern = '([A-Z]\.)'
+                    first_initial_match = re.findall(first_initial_pattern, '%s' % member)
+                    name = first_initial_match[0] + ' ' + name_match[0]
+                else:
+                    name = name_match[1] + ' ' + name_match[0]
+                    # print name
+
+                date_pattern = '(\d+/\d+/\d+)'
+                date_match = re.search(date_pattern, '%s' % member)
+                if date_match:
+                    date_final = date_match.group()
+                    members_dict[name] = (board_name, date_final)
+                else:
+                    members_dict[name] = (board_name, "No end of term given")
+        else:
+
+            print "This board had no members"
 
         print board_name, '\n', history, '\n', creation, '\n', members_dict, '\n', contact, '\n', link, '\n', address_list, '\n', meeting_place, '\n', meeting_time, '\n', phone, '\n', email
-
-
