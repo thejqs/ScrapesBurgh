@@ -135,6 +135,9 @@ class ScrapesBurgh():
             name_pattern = '([A-Z]\D?[^(,]\S+)'
             name_match = re.findall(name_pattern, '%s' % member)
 
+            # there are a few different types of name reconstruction
+            # we need to handle and when there are no members that's
+            # it's own thing
             if name_match[0] != "No Members":
                 name_final = [name.replace(u'\xa0', u'').replace(',', '').strip() for name in name_match]
                 if name_final[1] != "Ph.D." and name_final[1] != "Esq." and name_final[1] != "M.D.":
