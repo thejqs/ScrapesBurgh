@@ -121,17 +121,18 @@ class ScrapesBurgh():
         # address comes in broken apart as list elements
         # for some ridiculous reason
         address_list = []
+
         for addr in address:
             addr = addr.strip()
             address_list.append(addr)
 
         address = ' '.join(address_list)
 
+        # names are ugly and jumbled --
+        # they need to be broken apart and reassembled in order
         members_dict = {}
         no_members_dict = {}
 
-        # names are ugly and jumbled --
-        # they need to be broken apart and reassembled in order
         for member in members:
 
             # matches name, board title (when given) separately;
