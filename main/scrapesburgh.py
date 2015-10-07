@@ -101,6 +101,10 @@ class ScrapesBurgh():
     # PTOOEY. so dirty. your mother would be ashamed.
     @staticmethod
     def clean_board_info(url, board_name, history, creation, contact, address, meeting_place, meeting_time, phone, email, link, members):
+        '''All the cleaning in one place. Really these could be separate methods, 
+        but then they'd all have to be called somewhere and have names
+        and that's more extra lines than seemed necessary when the bits are all
+        working toward the same end'''
 
         board_name = board_name[0].strip()
 
