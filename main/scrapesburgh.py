@@ -79,6 +79,7 @@ class ScrapesBurgh():
         link_xpath = '//*[@id="form1"]/blockquote/table[1]/tr[1]/td/font/b/a/@href'
         members_xpath = '//*[@id="form1"]/blockquote/table[2]/tr/td/font/text()'
 
+        # sometimes the name of the board is a link
         if len(tree.xpath(board_name_xpath)) != 1:
             board_name_xpath = '//*[@id="form1"]/blockquote/table[1]/tr[1]/td/font/b/a/text()'
 
@@ -126,10 +127,11 @@ class ScrapesBurgh():
         no_members_dict = {}
 
         # names are ugly and jumbled --
-        # they need to be broken apart and reassembled
+        # they need to be broken apart and reassembled in order
         for member in members:
 
-            # matches name, board title (when given) separately
+            # matches name, board title (when given) separately;
+            # still need to add handling for title
             name_pattern = '([A-Z]\D?[^(,]\S+)'
             name_match = re.findall(name_pattern, '%s' % member)
 
@@ -139,31 +141,28 @@ class ScrapesBurgh():
                     if "Jr." not in name_final and "III" not in name_final:
                         first_name = name_final[1].partition(" ")[0]
                         name = first_name + ' ' + name_final[0]
-                        # print name, '\n'
+
                     else:
                         first_name = name_final[2].partition(" ")[0]
                         name = first_name + ' ' + name_final[0] + ' ' + name_final[1]
-                        # print name, '\n'
                 else:
                     first_name = name_final[2].partition(" ")[0]
                     name = first_name + ' ' + name_final[0]
-                    
-                print name
 
                 date_pattern = '(\d+/\d+/\d+)'
                 date_match = re.search(date_pattern, '%s' % member)
+
                 if date_match:
                     date_final = date_match.group()
                     members_dict[name] = (board_name, date_final)
-                    # print members_dict
                 else:
                     members_dict[name] = (board_name, "No end of term given")
+
             else:
                 no_members_dict[board_name] = ("%s has no members" % board_name, url)
 
-        print '\n', board_name, '\n'
-
-        # history, '\n', creation, '\n', members_dict, '\n', contact, '\n', link, '\n', address, '\n', meeting_place, '\n', meeting_time, '\n', phone, '\n', email, '\n', no_members_dict
+        # YAY CLEAN DATA
+        print '\n', board_name, '\n', history, '\n', creation, '\n', members_dict, '\n', contact, '\n', link, '\n', address, '\n', meeting_place, '\n', meeting_time, '\n', phone, '\n', email, '\n', no_members_dict
 
     # starts the whole ball o' wax
     @staticmethod
