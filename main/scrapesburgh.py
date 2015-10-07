@@ -56,7 +56,6 @@ class ScrapesBurgh():
     # creates the urls to scrape and opens each, beginning the scrape
     @staticmethod
     def scrape_data(board_ids):
-        # print board_ids
         for board_id in board_ids:
             url = "http://www.alleghenycounty.us/boards/index.asp?Board=%d&button1=View" % board_id
             tree = ScrapesBurgh.treeify(url)
@@ -68,7 +67,6 @@ class ScrapesBurgh():
     @staticmethod
     def get_board_info(url, tree):
 
-        # print html
         board_name_xpath = '//*[@id="form1"]/blockquote/table[1]/tr[1]/td/font/b/text()'
         history_xpath = '//*[@id="form1"]/blockquote/table[1]/tr[7]/td/font/p/text()'
         contact_xpath = '//*[@id="form1"]/blockquote/table[1]/tr[2]/td[2]/font/text()'
@@ -115,38 +113,57 @@ class ScrapesBurgh():
         meeting_time = meeting_time[0].replace(u'\xa0', u'')
         phone = phone[0].replace(u'\xa0', u'')
 
+        # address comes in broken apart as list elements
+        # for some ridiculous reason
         address_list = []
         for addr in address:
             addr = addr.strip()
             address_list.append(addr)
 
+        address = ' '.join(address_list)
+
         members_dict = {}
         no_members_dict = {}
 
+        # names are ugly and jumbled --
+        # they need to be broken apart and reassembled
         for member in members:
-            member = member.strip()
 
-            name_pattern = '([A-Z][^\s,]+)'
+            # matches name, board title (when given) separately
+            name_pattern = '([A-Z]\D?[^(,]\S+)'
             name_match = re.findall(name_pattern, '%s' % member)
 
-            if "Members" not in name_match:
-                name = name_match[1].replace(u'\xa0', u'') + ' ' + name_match[0]
+            if name_match[0] != "No Members":
+                name_final = [name.replace(u'\xa0', u'').replace(',', '').strip() for name in name_match]
+                if name_final[1] != "Ph.D." and name_final[1] != "Esq." and name_final[1] != "M.D.":
+                    if "Jr." not in name_final and "III" not in name_final:
+                        first_name = name_final[1].partition(" ")[0]
+                        name = first_name + ' ' + name_final[0]
+                        # print name, '\n'
+                    else:
+                        first_name = name_final[2].partition(" ")[0]
+                        name = first_name + ' ' + name_final[0] + ' ' + name_final[1]
+                        # print name, '\n'
+                else:
+                    first_name = name_final[2].partition(" ")[0]
+                    name = first_name + ' ' + name_final[0]
+                    
+                print name
+
                 date_pattern = '(\d+/\d+/\d+)'
                 date_match = re.search(date_pattern, '%s' % member)
                 if date_match:
                     date_final = date_match.group()
                     members_dict[name] = (board_name, date_final)
+                    # print members_dict
                 else:
                     members_dict[name] = (board_name, "No end of term given")
-
-            # elif len(name_match) == 1 and "Members" not in name_match:
-            #     first_initial_pattern = '([A-Z]\.)'
-            #     first_initial_match = re.findall(first_initial_pattern, '%s' % member)
-            #     name = first_initial_match[0] + ' ' + name_match[0]
             else:
                 no_members_dict[board_name] = ("%s has no members" % board_name, url)
 
-        print board_name, '\n', history, '\n', creation, '\n', members_dict, '\n', contact, '\n', link, '\n', address_list, '\n', meeting_place, '\n', meeting_time, '\n', phone, '\n', email, '\n', no_members_dict
+        print '\n', board_name, '\n'
+
+        # history, '\n', creation, '\n', members_dict, '\n', contact, '\n', link, '\n', address, '\n', meeting_place, '\n', meeting_time, '\n', phone, '\n', email, '\n', no_members_dict
 
     # starts the whole ball o' wax
     @staticmethod
