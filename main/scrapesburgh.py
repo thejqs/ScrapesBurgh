@@ -137,7 +137,9 @@ class ScrapesBurgh():
 
             # there are a few different types of name reconstruction
             # we need to handle and when there are no members that's
-            # it's own thing
+            # it's own thing;
+            # ripe for tightening up
+            # meantime: nested if statements -- I know, I know
             if name_match[0] != "No Members":
                 name_final = [name.replace(u'\xa0', u'').replace(',', '').strip() for name in name_match]
                 if name_final[1] != "Ph.D." and name_final[1] != "Esq." and name_final[1] != "M.D.":
