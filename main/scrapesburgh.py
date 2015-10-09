@@ -49,6 +49,9 @@ class ScrapesBurgh():
             except:
                 pass
 
+        # not strictly necessary to order them, but it has been
+        # a little easier to debug knowing at a glance where
+        # in the process something broke
         board_ids = sorted(board_ids)
 
         return tree, board_ids
@@ -59,7 +62,7 @@ class ScrapesBurgh():
         for board_id in board_ids:
             url = "http://www.alleghenycounty.us/boards/index.asp?Board=%d&button1=View" % board_id
             tree = ScrapesBurgh.treeify(url)
-            print url
+            # print url
             board_name, history, creation, contact, address, meeting_place, meeting_time, phone, email, link, members = ScrapesBurgh.get_board_info(url, tree)
             ScrapesBurgh.clean_board_info(url, board_name, history, creation, contact, address, meeting_place, meeting_time, phone, email, link, members)
 
@@ -121,21 +124,19 @@ class ScrapesBurgh():
         # address comes in broken apart as list elements
         # for some ridiculous reason
         address_list = []
-
-        for addr in address:
-            addr = addr.strip()
-            address_list.append(addr)
-
+        # for addr in address:
+        #     addr = addr.strip()
+        [address_list.append(addr.strip()) for addr in address]
         address = ' '.join(address_list)
 
         # names are ugly and jumbled --
-        # they need to be broken apart and reassembled in order
+        # they need to be reassembled in order
         members_dict = {}
         no_members_dict = {}
 
         for member in members:
-
-            # matches name, board title (when given) separately;
+            # matches different name permutations,
+            # board title (when given) separately;
             # still need to add handling for title
             name_pattern = '([A-Z]\D?[^(,]\S+)'
             name_match = re.findall(name_pattern, '%s' % member)
@@ -172,7 +173,7 @@ class ScrapesBurgh():
                 no_members_dict[board_name] = ("%s has no members" % board_name, url)
 
         # YAY CLEAN DATA
-        print '\n', board_name, '\n', history, '\n', creation, '\n', members_dict, '\n', contact, '\n', link, '\n', address, '\n', meeting_place, '\n', meeting_time, '\n', phone, '\n', email, '\n', no_members_dict
+        print '\n', url, '\n', board_name, '\n', history, '\n', creation, '\n', members_dict, '\n', contact, '\n', link, '\n', address, '\n', meeting_place, '\n', meeting_time, '\n', phone, '\n', email, '\n', no_members_dict
 
     # starts the whole ball o' wax
     @staticmethod
