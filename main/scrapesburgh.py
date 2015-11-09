@@ -1,3 +1,8 @@
+'''A scraper for data on all publicly appointed Allegheny County boards and
+commissions and their members for database storage and comparison to other
+existing datasets, which determines some of the final
+structure and cleaning here'''
+
 import urllib
 import urllib2
 from lxml import etree
@@ -7,10 +12,11 @@ import re
 
 class ScrapesBurgh():
 
-    # checks the url to make sure it's valid
-    # and, if so, reads in the html
     @staticmethod
     def open_url(url):
+        '''checks the url to make sure it's valid and, if so, 
+        reads in the html'''
+
         click = urllib.urlopen(url)
         if click.getcode() == 200:
             html = click.read()
@@ -19,25 +25,28 @@ class ScrapesBurgh():
             raise Exception("Nice try. Bad link.")
             # pass
 
-    # initial parse of the html
     @staticmethod
     def parse_html(html):
+        '''the initial parse of the html'''
+
         parser = etree.HTMLParser()
         master_tree = etree.parse(StringIO.StringIO(html), parser)
 
         return master_tree
 
-    # gets the parsed tree to begin the scrape
     @staticmethod
     def treeify(url):
+        '''gets the parsed tree to begin the scrape'''
+
         html = ScrapesBurgh.open_url(url)
         tree = ScrapesBurgh.parse_html(html)
 
         return tree
 
-    # gets all the ids we'll need to create the scraping urls dynamically
     @staticmethod
     def all_urls(url):
+        '''gets all the ids we'll need to create the scraping urls dynamically'''
+
         tree = ScrapesBurgh.treeify(url)
 
         board_ids = []
@@ -56,9 +65,10 @@ class ScrapesBurgh():
 
         return tree, board_ids
 
-    # creates the urls to scrape and opens each, beginning the scrape
     @staticmethod
     def scrape_data(board_ids):
+        '''creates the urls to scrape and opens each, beginning the scrape'''
+
         for board_id in board_ids:
             url = "http://www.alleghenycounty.us/boards/index.asp?Board=%d&button1=View" % board_id
             tree = ScrapesBurgh.treeify(url)
@@ -66,9 +76,9 @@ class ScrapesBurgh():
             board_name, history, creation, contact, address, meeting_place, meeting_time, phone, email, link, members = ScrapesBurgh.get_board_info(url, tree)
             ScrapesBurgh.clean_board_info(url, board_name, history, creation, contact, address, meeting_place, meeting_time, phone, email, link, members)
 
-    # points the scraper in the direction of the data it needs
     @staticmethod
     def get_board_info(url, tree):
+        '''points the scraper in the direction of the data it needs'''
 
         board_name_xpath = '//*[@id="form1"]/blockquote/table[1]/tr[1]/td/font/b/text()'
         history_xpath = '//*[@id="form1"]/blockquote/table[1]/tr[7]/td/font/p/text()'
@@ -100,14 +110,14 @@ class ScrapesBurgh():
 
         return board_name, history, creation, contact, address, meeting_place, meeting_time, phone, email, link, members
 
-    # cleans up the filthy, filthy data to prepare for storage
-    # PTOOEY. so dirty. your mother would be ashamed.
     @staticmethod
     def clean_board_info(url, board_name, history, creation, contact, address, meeting_place, meeting_time, phone, email, link, members):
-        '''All the cleaning in one place. Really these could be separate methods, 
-        but then they'd all have to be called somewhere and have names
-        and that's more extra lines than seemed necessary when the bits are all
-        working toward the same end'''
+        '''cleans up the filthy, filthy data to prepare for storage. related:
+        PTOOEY. so dirty. your mother would be ashamed. does all the cleaning
+        in one place. Really these could be separate methods, but then they'd
+        all have to be called somewhere and have names and that's more
+        extra lines than seemed necessary when the bits are all working
+        toward the same end'''
 
         board_name = board_name[0].strip()
 
@@ -142,8 +152,8 @@ class ScrapesBurgh():
             name_match = re.findall(name_pattern, '%s' % member)
 
             # there are a few different types of name reconstruction
-            # we need to handle and when there are no members that's
-            # it's own thing;
+            # we need to handle and when there are no members
+            # that's it's own thing;
             # ripe for tightening up
             # meantime: nested if statements -- I know, I know
             if name_match[0] != "No Members":
@@ -172,12 +182,12 @@ class ScrapesBurgh():
             else:
                 no_members_dict[board_name] = ("%s has no members" % board_name, url)
 
-        # YAY CLEAN DATA
+        # YAY CLEAN DATA?
         print '\n', url, '\n', board_name, '\n', history, '\n', creation, '\n', members_dict, '\n', contact, '\n', link, '\n', address, '\n', meeting_place, '\n', meeting_time, '\n', phone, '\n', email, '\n', no_members_dict
 
-    # starts the whole ball o' wax
     @staticmethod
     def start_scrape():
+        '''starts the whole ball o' wax'''
         tree, board_ids = ScrapesBurgh.all_urls('http://www.alleghenycounty.us/boards/index.asp')
 
         ScrapesBurgh.scrape_data(board_ids)
